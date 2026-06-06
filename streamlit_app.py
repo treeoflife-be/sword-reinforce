@@ -1,6 +1,5 @@
 import streamlit as st
 import random
-import pandas as pd
 
 # 페이지 설정
 st.set_page_config(page_title="검 강화하기", page_icon="⚔️", layout="wide")
@@ -8,6 +7,24 @@ st.set_page_config(page_title="검 강화하기", page_icon="⚔️", layout="wi
 # 제목
 st.title("⚔️ 검 강화하기")
 st.write("확률과 조건부확률을 배워보자!")
+
+# 검 이름 매핑
+sword_names = {
+    0: "나뭇잎 검",
+    1: "검 모양 사탕",
+    2: "낡은 단검",
+    3: "화염의 검",
+    4: "선택받은 마검",
+    5: "형광검",
+    6: "성스러운 검",
+    7: "이도류",
+    8: "샤이니 소드",
+    9: "삼도류",
+    10: "엑스칼리버",
+}
+
+def get_sword_name(level):
+    return sword_names.get(level, "알 수 없는 검")
 
 # 세션 상태 초기화
 if 'sword_level' not in st.session_state:
@@ -55,12 +72,14 @@ tab1, tab2 = st.tabs(["🎮 게임", "📚 조건부확률 학습"])
 # ========== 탭 1: 게임 ==========
 with tab1:
     st.divider()
-    col1, col2 = st.columns(2)
+    current_level = st.session_state.sword_level
+    success_rate = max(0, 100 - (current_level * 10))
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("현재 강화 레벨", f"+{st.session_state.sword_level}")
+        st.metric("현재 강화 레벨", f"+{current_level}")
     with col2:
-        current_level = st.session_state.sword_level
-        success_rate = max(0, 100 - (current_level * 10))
+        st.metric("현재 검", get_sword_name(current_level))
+    with col3:
         st.metric("강화 성공률", f"{success_rate}%")
 
     # 강화 버튼
@@ -115,6 +134,19 @@ with tab1:
     - **실패 시**: 강화에 실패하면 검의 레벨이 다시 +0으로 초기화됩니다.
     - **최대 강화**: +10 레벨까지 강화 가능합니다 (강화 확률 0%).
 
+    현재 검 목록:
+    - +0 : 나뭇잎 검
+    - +1 : 검 모양 사탕
+    - +2 : 낡은 단검
+    - +3 : 화염의 검
+    - +4 : 선택받은 마검
+    - +5 : 형광검
+    - +6 : 성스러운 검
+    - +7 : 이도류
+    - +8 : 샤이니 소드
+    - +9 : 삼도류
+    - +10 : 엑스칼리버
+
     예시:
     - +0 → 강화 확률: 100%
     - +1 → 강화 확률: 90%
@@ -129,11 +161,15 @@ with tab2:
     
     st.write("""
     ### 조건부확률이란?
-    **조건부확률**은 어떤 사건 A가 일어났을 때, 사건 B가 일어날 확률입니다.
+    **조건부확률**은 어떤 사건 A가 이미 일어났다는 것을 알 때, 그 조건 하에서 다른 사건 B가 일어날 확률입니다.
     
     수식: **P(B|A) = P(A ∩ B) / P(A)**
     
-    즉, "A가 발생했다는 조건 하에서 B가 발생할 확률"입니다.
+    더 쉽게 말하면, "A라는 상황이 주어졌을 때, B가 일어날 확률은 얼마인가?"를 나타냅니다.
+    
+    **예시:**
+    - 날씨가 흐린 상태(A)일 때, 비가 올 확률(B) → P(비 | 흐림)
+    - 검이 +3 레벨(A)에 있을 때, +4로 강화될 확률(B) → P(+4 달성 | +3 레벨)
     """)
     
     st.divider()
@@ -142,59 +178,117 @@ with tab2:
     ### 검 강화 게임에서의 조건부확률
     
     **현재 레벨이 +3일 때를 생각해봅시다:**
-    - 현재 강화 성공률: 70%
-    - 만약 강화에 성공한다면, 다음 레벨(+4)에서의 강화 성공률은 60%입니다.
+    - 검이 지금 +3 레벨이라는 **조건** 하에서, 다음 강화에 성공할 확률은 70%입니다.
+    - 만약 그 강화에 성공하여 +4가 되었다면, 이제 그 **새로운 조건** 하에서 +5로 강화될 확률은 60%입니다.
     
-    **조건부확률 예시:**
-    - P(+4 달성) = P(현재 +3에서 강화 성공) = 70%
-    - P(+5 달성 | +4 달성) = 60% ("+4에 도달했다는 조건 하에서 +5에 도달할 확률")
+    **조건부확률 표기:**
+    - P(+4 달성 | 현재 +3) = 70% ("현재 +3이라는 조건 하에서 +4에 달성할 확률")
+    - P(+5 달성 | 현재 +4) = 60% ("현재 +4라는 조건 하에서 +5에 달성할 확률")
+    
+    **핵심 개념:** 조건부확률은 현재 상황(조건)이 주어졌을 때 다음에 일어날 가능성을 나타냅니다.
     """)
     
     st.divider()
     
-    st.subheader("� 연속 성공 확률 계산")
+    st.subheader("🎯 조건부 확률로 분석해보기")
     st.write("""
-    **먼저 특정 레벨과 목표 레벨을 정해두고, 배운 내용을 바탕으로 조건부확률이 어떻게 나올지 스스로 계산해보세요!**
+    ### 조건부 확률 활용: 특정 레벨에서 출발하여 목표 레벨 달성하기
+    
+    검을 한 번에 여러 레벨 강화해야 한다고 생각해봅시다. 예를 들어, 현재 +3에서 +10까지 도달해야 한다면?
+    
+    **단계별 조건부확률:**
+    1. 지금 +3이라는 조건에서 → +4로 강화할 확률: 70%
+    2. (만약 성공했다면) 이제 +4라는 새로운 조건에서 → +5로 강화할 확률: 60%  
+    3. (계속 성공한다면) 이제 +5라는 조건에서 → +6으로 강화할 확률: 50%
+    4. ... (이런 식으로 계속)
+    
+    **최종 확률 구하기:**
+    각 단계에서의 조건부확률들을 모두 함께 고려했을 때, 지금 +3에서 출발하여 +10에 도달할 전체 확률은?
+    
+    = 70% × 60% × 50% × ... (각 단계의 조건부확률을 모두 곱함)
     """)
     
-    start_level = st.slider("시작 레벨", 0, 9, 0, key="start_level")
-    end_level = st.slider("목표 레벨", start_level + 1, 10, 10, key="end_level")
+    st.divider()
     
-    # 연속 성공 확률 계산
-    continuous_success_prob = 1.0
-    for lv in range(start_level, end_level):
+    # 조건부 확률 분석을 위한 슬라이더
+    st.write("**🎯 조건부 확률 계산 (특정 레벨에서 출발하는 경우)**")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        current_level_analysis = st.slider("현재 레벨 (조건)", 0, 9, 3, key="current_level_analysis")
+    with col2:
+        min_target = current_level_analysis + 1
+        if min_target < 10:
+            target_level_analysis = st.slider("목표 레벨 (이상)", min_target, 10, 10, key="target_level_analysis")
+        else:
+            st.write("목표 레벨: +10")
+            target_level_analysis = 10
+    
+    # 조건부 확률 계산
+    conditional_prob = 1.0
+    for lv in range(current_level_analysis, target_level_analysis):
         success_rate = max(0, 100 - (lv * 10))
-        continuous_success_prob *= (success_rate / 100)
+        conditional_prob *= (success_rate / 100)
     
-    continuous_success_percent = continuous_success_prob * 100
-    
-    st.write(f"""
-    **+{start_level}에서 +{end_level}까지 모두 성공할 확률:**
-    """)
+    conditional_prob_percent = conditional_prob * 100
     
     # 계산 과정 표시
-    prob_steps = []
-    for lv in range(start_level, end_level):
+    prob_steps_conditional = []
+    prob_values = []
+    for lv in range(current_level_analysis, target_level_analysis):
         success_rate = max(0, 100 - (lv * 10))
-        prob_steps.append(f"P(+{lv}→+{lv+1}) = {success_rate}%")
+        prob_steps_conditional.append(f"P(+{lv+1} | +{lv})")
+        prob_values.append(f"{success_rate}%")
     
-    st.write(" × ".join(prob_steps))
+    st.write(f"**계산 과정:**")
+    if prob_steps_conditional:
+        # 조건부 확률 수식을 이용한 표시
+        st.write(f"**P(+{target_level_analysis} 도달 | 현재 +{current_level_analysis})**")
+        st.write(f"**= {' × '.join(prob_steps_conditional)}**")
+        
+        # 조건부확률 공식 설명
+        st.write("**조건부확률 공식을 이용한 계산:**")
+        st.write("각 단계에서 P(다음 레벨 | 현재 레벨) = P(현재 레벨에서 다음 레벨 강화 성공 ∩ 현재 레벨) / P(현재 레벨)")
+        st.write("게임에서는 이미 현재 레벨에 있다는 조건이 만족되므로:")
+        
+        explanation_steps = []
+        for lv in range(current_level_analysis, target_level_analysis):
+            success_rate = max(0, 100 - (lv * 10))
+            explanation_steps.append(f"P(+{lv+1} | +{lv}) = {success_rate}%")
+        
+        st.write(" × ".join(explanation_steps))
+        st.write("= " + " × ".join(prob_values))
+    else:
+        st.write(f"이미 +{current_level_analysis} 레벨에 있습니다.")
     
-    st.metric("전체 연속 성공 확률", f"{continuous_success_percent:.2f}%")
+    st.metric("최종 확률 (모든 조건부확률을 함께 고려)", f"{conditional_prob_percent:.2f}%")
     
-    if continuous_success_percent > 0:
-        st.info(f"💡 평균적으로 약 {1/continuous_success_prob:.0f}번 시도하면 성공할 수 있습니다!")
+    if conditional_prob > 0:
+        try:
+            attempts_conditional = max(1, int(round(1/conditional_prob)))
+            st.info(f"💡 현재 +{current_level_analysis}에서 +{target_level_analysis} 이상에 도달하려면 평균적으로 약 {attempts_conditional}번 시도하면 성공할 수 있습니다!")
+        except Exception:
+            st.info("💡 시도 횟수 계산 중 오류가 발생했습니다.")
+    else:
+        st.info("💡 해당 구간은 성공 확률이 0%이므로 달성 불가합니다!")
     
+    # 연속 성공 확률과 비교
     st.divider()
-    
-    st.subheader("🎯 학습 포인트")
+    st.write("**📊 연속 성공 확률과의 비교**")
     st.write("""
-    1. **곱셈 법칙**: 여러 사건이 연속으로 일어날 확률은 각 확률을 곱합니다.
-       - P(A ∩ B) = P(A) × P(B|A)
+    ### 여러 조건부확률을 함께 생각하기
     
-    2. **확률 감소**: 레벨이 올라갈수록 성공 확률이 감소하므로, 높은 레벨에 도달하기는 점점 어려워집니다.
+    게임에서 강화는 한 번에 끝나지 않습니다. 여러 번 연속으로 도전해야 높은 레벨에 도달합니다.
     
-    3. **기댓값**: 특정 레벨 달성에 필요한 평균 시도 횟수는 1을 연속 성공 확률로 나눈 값입니다.
+    **현재 +3에서 +10을 목표로 할 때:**
+    - P(+4 달성 | 현재 +3) × P(+5 달성 | 현재 +4) × ... × P(+10 달성 | 현재 +9)
+    - = 70% × 60% × 50% × 40% × 30% × 20% × 10%
+    - = 약 0.0504% (매우 낮은 확률!)
     
-    4. **조건부확률의 중요성**: 이전 시도의 결과가 다음 시도의 확률에 영향을 미칩니다.
+    각 단계에서의 조건부확률을 모두 함께 고려할 때, 모든 조건이 만족되어야만 최종 목표에 도달할 수 있습니다.
+    
+    **주요 개념:**
+    - 각 단계마다 "현재 상황"이 달라집니다 (조건이 변함)
+    - 새로운 상황에서는 새로운 조건부확률이 적용됩니다
+    - 모든 단계를 성공하려면 각 단계의 조건부확률을 모두 함께 고려해야 합니다
     """)
