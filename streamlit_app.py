@@ -242,21 +242,25 @@ with tab2:
     
     st.write(f"**계산 과정:**")
     if prob_steps_conditional:
-        # 조건부 확률 수식을 이용한 표시
+        # 곱셈정리를 이용한 설명
         st.write(f"**P(+{target_level_analysis} 도달 | 현재 +{current_level_analysis})**")
-        st.write(f"**= {' × '.join(prob_steps_conditional)}**")
         
-        # 조건부확률 공식 설명
-        st.write("**조건부확률 공식을 이용한 계산:**")
-        st.write("각 단계에서 P(다음 레벨 | 현재 레벨) = P(현재 레벨에서 다음 레벨 강화 성공 ∩ 현재 레벨) / P(현재 레벨)")
-        st.write("게임에서는 이미 현재 레벨에 있다는 조건이 만족되므로:")
+        st.write("**확률의 곱셈정리를 이용한 계산:**")
+        st.write("현재 +{} 레벨에서 출발하여 각 단계를 모두 성공할 확률:".format(current_level_analysis))
         
-        explanation_steps = []
-        for lv in range(current_level_analysis, target_level_analysis):
+        # 단계별 설명
+        step_explanation = []
+        for idx, lv in enumerate(range(current_level_analysis, target_level_analysis)):
             success_rate = max(0, 100 - (lv * 10))
-            explanation_steps.append(f"P(+{lv+1} | +{lv}) = {success_rate}%")
+            if idx == 0:
+                step_explanation.append(f"1단계) 현재 +{lv}에서 +{lv+1}로 강화: {success_rate}%")
+            else:
+                step_explanation.append(f"{idx+1}단계) +{lv}에서 +{lv+1}로 강화: {success_rate}%")
         
-        st.write(" × ".join(explanation_steps))
+        for step in step_explanation:
+            st.write(step)
+        
+        st.write("\n**곱셈정리에 의해, 모든 단계를 연속으로 성공할 확률:**")
         st.write("= " + " × ".join(prob_values))
     else:
         st.write(f"이미 +{current_level_analysis} 레벨에 있습니다.")
